@@ -17,7 +17,7 @@ export default function ActivePage() {
   useEffect(() => {
     const duration = parseInt(searchParams.get('duration') || '0');
     if (duration <= 0) {
-      router.push('/');
+      router.push('/home');
       return;
     }
 

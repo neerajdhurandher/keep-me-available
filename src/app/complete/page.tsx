@@ -9,12 +9,12 @@ export default function CompletePage() {
   const handleGoHome = () => {
     console.log('Go Home button clicked - navigating to home page');
     try {
-      router.push('/');
+      router.push('/home');
       console.log('Navigation called successfully');
     } catch (error) {
       console.error('Navigation error:', error);
       // Fallback: use window.location
-      window.location.href = '/';
+      window.location.href = '/home';
     }
   };
 
