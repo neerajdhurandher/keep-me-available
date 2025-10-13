@@ -1,10 +1,37 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import './styles/complete.css';
 
 export default function CompletePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [sessionData, setSessionData] = useState({
+    duration: 0,
+    hours: 0,
+    minutes: 0,
+    clicks: 0,
+    stopped: false
+  });
+
+  useEffect(() => {
+    const duration = parseInt(searchParams.get('duration') || '0');
+    const hours = parseInt(searchParams.get('hours') || '0');
+    const minutes = parseInt(searchParams.get('minutes') || '0');
+    const clicks = parseInt(searchParams.get('clicks') || '0');
+    const stopped = searchParams.get('stopped') === 'true';
+
+    setSessionData({ duration, hours, minutes, clicks, stopped });
+  }, [searchParams]);
+
+  const formatDuration = () => {
+    const { hours, minutes } = sessionData;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
 
   const handleGoHome = () => {
     console.log('Go Home button clicked - navigating to home page');
@@ -30,8 +57,8 @@ export default function CompletePage() {
         <h1 className="complete-title">Task Completed!</h1>
         
         <p className="complete-message">
-          Your system has been kept active for the requested duration. 
-          The session has ended successfully.
+          Your system has been kept active for {formatDuration()}. 
+          The session has ended {sessionData.stopped ? 'manually' : 'successfully'}.
         </p>
         
         <div className="stats-card">
@@ -40,17 +67,17 @@ export default function CompletePage() {
             <div className="stat-item">
               <span className="stat-icon">⏱️</span>
               <span className="stat-label">Duration</span>
-              <span className="stat-value">Completed</span>
+              <span className="stat-value">{formatDuration()}</span>
             </div>
             <div className="stat-item">
               <span className="stat-icon">🖱️</span>
-              <span className="stat-label">Status</span>
-              <span className="stat-value">Active</span>
+              <span className="stat-label">Clicks</span>
+              <span className="stat-value">{sessionData.clicks}</span>
             </div>
             <div className="stat-item">
               <span className="stat-icon">✅</span>
-              <span className="stat-label">Result</span>
-              <span className="stat-value">Success</span>
+              <span className="stat-label">Status</span>
+              <span className="stat-value">{sessionData.stopped ? 'Stopped' : 'Completed'}</span>
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ export default function ActivePage() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [clickCount, setClickCount] = useState(0);
+  const [originalDuration, setOriginalDuration] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const clickBoxRef = useRef<HTMLDivElement>(null);
@@ -22,6 +23,7 @@ export default function ActivePage() {
     }
 
     setTimeRemaining(duration * 60); // Convert minutes to seconds
+    setOriginalDuration(duration); // Store original duration in minutes
     setIsActive(true);
 
     return () => {
@@ -113,14 +115,16 @@ export default function ActivePage() {
   // Separate effect for handling completion redirect
   useEffect(() => {
     if (!isActive && timeRemaining === 0) {
-      // Redirect to completion page after a short delay
+      // Redirect to completion page after a short delay with session data
       const redirectTimeout = setTimeout(() => {
-        router.push('/complete');
+        const hours = Math.floor(originalDuration / 60);
+        const minutes = originalDuration % 60;
+        router.push(`/complete?duration=${originalDuration}&hours=${hours}&minutes=${minutes}&clicks=${clickCount}`);
       }, 2000);
 
       return () => clearTimeout(redirectTimeout);
     }
-  }, [isActive, timeRemaining, router]);
+  }, [isActive, timeRemaining, router, originalDuration, clickCount]);
 
 
 
@@ -138,7 +142,13 @@ export default function ActivePage() {
   const handleStopSession = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (clickIntervalRef.current) clearInterval(clickIntervalRef.current);
-    router.push('/complete');
+    
+    // Calculate actual session duration when manually stopped
+    const actualDuration = Math.ceil((originalDuration * 60 - timeRemaining) / 60);
+    const hours = Math.floor(actualDuration / 60);
+    const minutes = actualDuration % 60;
+    
+    router.push(`/complete?duration=${actualDuration}&hours=${hours}&minutes=${minutes}&clicks=${clickCount}&stopped=true`);
   };
 
   return (
