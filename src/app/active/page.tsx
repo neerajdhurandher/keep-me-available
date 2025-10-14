@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import './styles/active.css';
 
-export default function ActivePage() {
+function ActivePageContent() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [clickCount, setClickCount] = useState(0);
@@ -195,5 +195,19 @@ export default function ActivePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ActivePage() {
+  return (
+    <Suspense fallback={
+      <div className="active-container">
+        <div className="active-header">
+          <h1 className="active-title">Loading...</h1>
+        </div>
+      </div>
+    }>
+      <ActivePageContent />
+    </Suspense>
   );
 }

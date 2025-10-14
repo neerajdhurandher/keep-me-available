@@ -1,10 +1,10 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import './styles/complete.css';
 
-export default function CompletePage() {
+function CompletePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sessionData, setSessionData] = useState({
@@ -95,5 +95,19 @@ export default function CompletePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CompletePage() {
+  return (
+    <Suspense fallback={
+      <div className="complete-container">
+        <div className="complete-content">
+          <h1 className="complete-title">Loading...</h1>
+        </div>
+      </div>
+    }>
+      <CompletePageContent />
+    </Suspense>
   );
 }
