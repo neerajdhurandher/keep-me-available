@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import './styles/active.css';
 
 function ActivePageContent() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isActive, setIsActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showResumePopup, setShowResumePopup] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [originalDuration, setOriginalDuration] = useState(0);
   const [wakeLockStatus, setWakeLockStatus] = useState<'unsupported' | 'active' | 'failed' | 'released'>('unsupported');
@@ -15,7 +17,8 @@ function ActivePageContent() {
   const clickBoxRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const clickIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const wakeLockRef = useRef<any>(null);
+  const wakeLockRef = useRef<{ release: () => void } | null>(null);
+  const pauseTimeRef = useRef<number>(0);
 
   useEffect(() => {
     const duration = parseInt(searchParams.get('duration') || '0');
@@ -49,12 +52,13 @@ function ActivePageContent() {
   // Wake Lock API functions
   const requestWakeLock = async () => {
     try {
-      if ('wakeLock' in navigator) {
-        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      if ('wakeLock' in navigator && navigator.wakeLock) {
+        const wakeLock = await navigator.wakeLock.request('screen');
+        wakeLockRef.current = wakeLock;
         setWakeLockStatus('active');
         console.log('✅ Screen wake lock acquired - screen will stay on');
         
-        wakeLockRef.current.addEventListener('release', () => {
+        wakeLock.addEventListener('release', () => {
           setWakeLockStatus('released');
           console.log('⚠️ Wake lock released');
         });
@@ -76,10 +80,107 @@ function ActivePageContent() {
     }
   };
 
+  // Handle page visibility changes (tab switching)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // User switched away from tab - pause everything
+        setIsPaused(true);
+        pauseTimeRef.current = Date.now();
+        
+        // Clear intervals
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (clickIntervalRef.current) {
+          clearInterval(clickIntervalRef.current);
+          clickIntervalRef.current = null;
+        }
+        
+        // Wake lock will be automatically released by browser
+        console.log('⏸️ Tab hidden - session paused');
+      } else if (isPaused && isActive) {
+        // User returned to tab - show resume popup
+        setShowResumePopup(true);
+        
+        // Ensure intervals are cleared when showing popup
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (clickIntervalRef.current) {
+          clearInterval(clickIntervalRef.current);
+          clickIntervalRef.current = null;
+        }
+        
+        console.log('👁️ Tab visible - showing resume options');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isPaused, isActive]);
+
+  // Handle resume session
+  const handleResumeSession = async () => {
+    setShowResumePopup(false);
+    setIsPaused(false);
+    
+    // Re-acquire wake lock
+    await requestWakeLock();
+    
+    // Note: Intervals will be automatically started by useEffect when 
+    // showResumePopup becomes false and isPaused becomes false
+    
+    console.log('▶️ Session resumed');
+  };
+
+  // Handle end session from popup
+  const handleEndSessionFromPopup = () => {
+    setShowResumePopup(false);
+    handleStopSession();
+  };
+
+  const simulateClick = useCallback(() => {
+    if (clickBoxRef.current) {
+      const rect = clickBoxRef.current.getBoundingClientRect();
+      const randomX = Math.random() * (rect.width - 20) + 10;
+      const randomY = Math.random() * (rect.height - 20) + 10;
+      
+      // Create visual click effect
+      const clickIndicator = document.createElement('div');
+      clickIndicator.className = 'click-indicator';
+      clickIndicator.style.left = `${randomX}px`;
+      clickIndicator.style.top = `${randomY}px`;
+      
+      clickBoxRef.current.appendChild(clickIndicator);
+      
+      // Remove the indicator after animation
+      setTimeout(() => {
+        if (clickIndicator.parentNode) {
+          clickIndicator.parentNode.removeChild(clickIndicator);
+        }
+      }, 1000);
+
+      setClickCount(prev => prev + 1);
+    }
+  }, []);
+
   // Separate effect for managing the countdown timer
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || isPaused || showResumePopup) return;
 
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Start new interval
     intervalRef.current = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
@@ -105,38 +206,19 @@ function ActivePageContent() {
         intervalRef.current = null;
       }
     };
-  }, [isActive]);
-
-  const simulateClick = () => {
-    if (clickBoxRef.current) {
-      const rect = clickBoxRef.current.getBoundingClientRect();
-      const randomX = Math.random() * (rect.width - 20) + 10;
-      const randomY = Math.random() * (rect.height - 20) + 10;
-      
-      // Create visual click effect
-      const clickIndicator = document.createElement('div');
-      clickIndicator.className = 'click-indicator';
-      clickIndicator.style.left = `${randomX}px`;
-      clickIndicator.style.top = `${randomY}px`;
-      
-      clickBoxRef.current.appendChild(clickIndicator);
-      
-      // Remove the indicator after animation
-      setTimeout(() => {
-        if (clickIndicator.parentNode) {
-          clickIndicator.parentNode.removeChild(clickIndicator);
-        }
-      }, 1000);
-
-      setClickCount(prev => prev + 1);
-    }
-  };
+  }, [isActive, isPaused, showResumePopup]);
 
   // Separate effect for managing the click simulation
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || isPaused || showResumePopup) return;
 
-    // Start the click simulation every minute
+    // Clear any existing interval
+    if (clickIntervalRef.current) {
+      clearInterval(clickIntervalRef.current);
+      clickIntervalRef.current = null;
+    }
+
+    // Start new interval
     clickIntervalRef.current = setInterval(() => {
       simulateClick();
     }, 60000); // 60 seconds
@@ -147,7 +229,7 @@ function ActivePageContent() {
         clickIntervalRef.current = null;
       }
     };
-  }, [isActive]);
+  }, [isActive, isPaused, showResumePopup, simulateClick]);
 
   // Separate effect for handling completion redirect
   useEffect(() => {
@@ -230,18 +312,61 @@ function ActivePageContent() {
           
           <div className="box-content">
             <div className="status-indicator">
-              <div className={`status-dot ${isActive ? 'active' : 'inactive'}`}></div>
+              <div className={`status-dot ${isActive && !isPaused && !showResumePopup ? 'active' : 'inactive'}`}></div>
               <span className="status-text">
-                {isActive ? 'Keeping System Active' : 'Session Ending...'}
+                {showResumePopup ? 'Waiting for Resume Choice' : 
+                 isPaused ? 'Session Paused' : 
+                 isActive ? 'Keeping System Active' : 'Session Ending...'}
               </span>
             </div>
             
             <p className="instruction-text">
-              Click anywhere in this area to manually trigger activity
+              {showResumePopup ? 'Choose Resume or End Task in the popup above' :
+               isPaused ? 'Timer paused - switch back to resume' : 
+               'Click anywhere in this area to manually trigger activity'}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Resume Popup Modal */}
+      {showResumePopup && (
+        <div className="popup-overlay">
+          <div className="popup-modal">
+            <div className="popup-header">
+              <h3 className="popup-title">Welcome Back!</h3>
+              <p className="popup-message">
+                Your session was paused when you switched tabs. 
+                The Wake Lock was automatically released.
+              </p>
+            </div>
+            
+            <div className="popup-content">
+              <p className="popup-info">
+                Time remaining: <strong>{formatTime(timeRemaining)}</strong>
+              </p>
+              <p className="popup-subtitle">
+                Would you like to resume the session?
+              </p>
+            </div>
+            
+            <div className="popup-buttons">
+              <button 
+                onClick={handleResumeSession}
+                className="resume-button"
+              >
+                🔄 Resume Session
+              </button>
+              <button 
+                onClick={handleEndSessionFromPopup}
+                className="end-button"
+              >
+                ⏹️ End Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
