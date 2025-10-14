@@ -78,9 +78,19 @@ export default function Home() {
             <ul className="info-list">
               <li>Set your desired active duration</li>
               <li>Click start to begin the session</li>
-              <li>The app will simulate clicks every minute</li>
-              <li>Your system will stay awake for the duration</li>
+              <li>The app uses Wake Lock API to prevent screen sleep</li>
+              <li>Falls back to click simulation for unsupported browsers</li>
+              <li>For system sleep prevention, adjust power settings temporarily</li>
             </ul>
+            
+            <div className="browser-support">
+              <h4 className="support-title">🛡️ Sleep Prevention Methods</h4>
+              <ul className="support-list">
+                <li><strong>Chrome/Edge 84+:</strong> Wake Lock API (prevents screen sleep)</li>
+                <li><strong>Other browsers:</strong> Click simulation only</li>
+                <li><strong>Full system sleep:</strong> Requires manual power settings</li>
+              </ul>
+            </div>
           </div>
         </main>
       </div>

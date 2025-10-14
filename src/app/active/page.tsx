@@ -9,11 +9,13 @@ function ActivePageContent() {
   const [isActive, setIsActive] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [originalDuration, setOriginalDuration] = useState(0);
+  const [wakeLockStatus, setWakeLockStatus] = useState<'unsupported' | 'active' | 'failed' | 'released'>('unsupported');
   const router = useRouter();
   const searchParams = useSearchParams();
   const clickBoxRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const clickIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const wakeLockRef = useRef<any>(null);
 
   useEffect(() => {
     const duration = parseInt(searchParams.get('duration') || '0');
@@ -26,6 +28,9 @@ function ActivePageContent() {
     setOriginalDuration(duration); // Store original duration in minutes
     setIsActive(true);
 
+    // Request wake lock to prevent screen sleep
+    requestWakeLock();
+
     return () => {
       // Cleanup function will run when component unmounts or dependencies change
       if (intervalRef.current) {
@@ -36,8 +41,40 @@ function ActivePageContent() {
         clearInterval(clickIntervalRef.current);
         clickIntervalRef.current = null;
       }
+      // Release wake lock on cleanup
+      releaseWakeLock();
     };
   }, [searchParams, router]);
+
+  // Wake Lock API functions
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        setWakeLockStatus('active');
+        console.log('✅ Screen wake lock acquired - screen will stay on');
+        
+        wakeLockRef.current.addEventListener('release', () => {
+          setWakeLockStatus('released');
+          console.log('⚠️ Wake lock released');
+        });
+      } else {
+        setWakeLockStatus('unsupported');
+        console.log('⚠️ Wake Lock API not supported - using click simulation only');
+      }
+    } catch (err) {
+      setWakeLockStatus('failed');
+      console.error('❌ Wake lock request failed:', err);
+    }
+  };
+
+  const releaseWakeLock = () => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release();
+      wakeLockRef.current = null;
+      setWakeLockStatus('released');
+    }
+  };
 
   // Separate effect for managing the countdown timer
   useEffect(() => {
@@ -143,6 +180,9 @@ function ActivePageContent() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (clickIntervalRef.current) clearInterval(clickIntervalRef.current);
     
+    // Release wake lock when stopping session
+    releaseWakeLock();
+    
     // Calculate actual session duration when manually stopped
     const actualDuration = Math.ceil((originalDuration * 60 - timeRemaining) / 60);
     const hours = Math.floor(actualDuration / 60);
@@ -161,6 +201,14 @@ function ActivePageContent() {
         </div>
         <div className="session-info">
           <span className="click-counter">Clicks: {clickCount}</span>
+          <div className="wake-lock-status">
+            <span className={`wake-lock-indicator ${wakeLockStatus}`}>
+              {wakeLockStatus === 'active' && '🔒 Screen Lock Active'}
+              {wakeLockStatus === 'unsupported' && '⚠️ Wake Lock Unsupported'}
+              {wakeLockStatus === 'failed' && '❌ Wake Lock Failed'}
+              {wakeLockStatus === 'released' && '🔓 Wake Lock Released'}
+            </span>
+          </div>
           <button onClick={handleStopSession} className="stop-button">
             Stop Session
           </button>

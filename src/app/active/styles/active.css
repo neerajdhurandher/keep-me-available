@@ -53,12 +53,50 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .click-counter {
   color: rgba(255, 255, 255, 0.8);
   font-size: 1rem;
   font-weight: 600;
+}
+
+.wake-lock-status {
+  display: flex;
+  align-items: center;
+}
+
+.wake-lock-indicator {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.wake-lock-indicator.active {
+  color: #ffe600;
+  background: rgba(255, 230, 0, 0.15);
+  border: 1px solid rgba(255, 230, 0, 0.3);
+}
+
+.wake-lock-indicator.unsupported {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.wake-lock-indicator.failed {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.wake-lock-indicator.released {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.15);
+  border: 1px solid rgba(156, 163, 175, 0.3);
 }
 
 .stop-button {
