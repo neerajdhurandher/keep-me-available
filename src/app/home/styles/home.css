@@ -1,6 +1,6 @@
 .home-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1b1a1a 0%, #2a2929 50%, #1b1a1a 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,18 +41,18 @@
 }
 
 .timer-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 230, 0, 0.2);
 }
 
 .card-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #334155;
+  color: #ffffff;
   margin-bottom: 32px;
 }
 
@@ -74,7 +74,7 @@
 .input-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #64748b;
+  color: #ffe600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -85,40 +85,39 @@
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
-  border: 2px solid #e2e8f0;
+  border: 2px solid rgba(255, 230, 0, 0.3);
   border-radius: 12px;
-  background: white;
-  color: #334155;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   transition: all 0.2s ease;
 }
 
 .time-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #ffe600;
+  box-shadow: 0 0 0 3px rgba(255, 230, 0, 0.2);
 }
 
 .input-separator {
   font-size: 2rem;
   font-weight: 700;
-  color: #64748b;
+  color: #ffe600;
   margin-bottom: 8px;
 }
 
 .duration-display {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #475569;
+  color: #ffe600;
   margin-bottom: 32px;
   padding: 12px 24px;
-  background: #f1f5f9;
   border-radius: 12px;
   display: inline-block;
 }
 
 .start-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #ffe600 0%, #f4d900 100%);
+  color: #1b1a1a;
   border: none;
   padding: 16px 48px;
   font-size: 1.125rem;
@@ -128,12 +127,13 @@
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 25px rgba(255, 230, 0, 0.3);
 }
 
 .start-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 12px 35px rgba(255, 230, 0, 0.5);
+  background: linear-gradient(135deg, #f4d900 0%, #e6c200 100%);
 }
 
 .start-button:active:not(:disabled) {
@@ -146,11 +146,11 @@
 }
 
 .info-section {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 230, 0, 0.1);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 230, 0, 0.2);
 }
 
 .info-title {
@@ -181,7 +181,7 @@
   content: '→';
   position: absolute;
   left: 0;
-  color: #fbbf24;
+  color: #ffe600;
   font-weight: bold;
 }
 
